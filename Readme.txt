@@ -1,0 +1,1 @@
+This is my Assignment for Operating System (CSE 316). It is a multithread program that implements Banker's Algorithm and ensure the safety of shared data by using mutex locks. 
