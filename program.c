@@ -1,7 +1,9 @@
-#include<stdio.h>
+#include<stdio.h>	
 #include<pthread.h>
 #include<stdlib.h>
+
 int i,j;
+
 int no_of_process;
 int no_of_resources;
 int totalResource[20];
@@ -9,44 +11,14 @@ int availResouce[20];
 int allocResource[20][20];
 int maxResource[20][20];
 int needResource[20][20];
+
 pthread_mutex_t mutex;
+
+void printAvailResource();
+void printNeedResource();
+void printNeedResource();
+int less(int []);
 void* fun(void *);
-void printAvailResource()
-{
-    for(i=0;i<no_of_resources;i++)
-    {
-        printf("%d\t",availResouce[i]);
-    }
-    printf("\n");
-}
-void printAllocResource()
-{
-    for(i=0;i<no_of_process;i++)
-    {
-        printf("Process %d :\t",(i+1));
-        for(j=0;j<no_of_resources;j++)
-            printf("%d\t",allocResource[i][j]);
-        printf("\n");
-    }
-}
-void printNeedResource()
-{
-    for(i=0;i<no_of_process;i++)
-    {
-        printf("Process %d :\t",(i+1));
-        for(j=0;j<no_of_resources;j++)
-            printf("%d\t",needResource[i][j]);
-        printf("\n");
-    }
-}
-int less(int a[],int b[],int n)
-{
-    int i;
-    for(i=0;i<n;i++)
-        if(a[i]>b[i])
-            return 1;
-    return 0;
-}
 
 int main()
 {
@@ -90,7 +62,7 @@ int main()
                     check[j]+=allocResource[i][j];
                 }
         }
-        if(less(check,totalResource,no_of_resources))
+        if(less(check))
             {
                 printf("Sorry! Resource Allocated is bigger than available in system. Re-Enter\n");
                 goto s3;
@@ -146,9 +118,56 @@ int main()
          pthread_join(*(tid+i),NULL);
      }
 
+    return 0;
 }
 void * fun(void *x)
 {
     int processID = *(int*)x;
     printf("%d",processID);
+    pthread_mutex_lock(&mutex);
+    printf("Process %d trying to request some resource \n",processID);
+    int reqResource[no_of_resources];
+    printf("Enter the no of resources requested by Process %d",processID);
+    for(i=0;i<no_of_resources;i++)
+        scanf("%d",&reqResource[i]);
+
+
+
 }
+void printAvailResource()
+{
+    for(i=0;i<no_of_resources;i++)
+    {
+        printf("%d\t",availResouce[i]);
+    }
+    printf("\n");
+}
+void printAllocResource()
+{
+    for(i=0;i<no_of_process;i++)
+    {
+        printf("Process %d :\t",(i+1));
+        for(j=0;j<no_of_resources;j++)
+            printf("%d\t",allocResource[i][j]);
+        printf("\n");
+    }
+}
+void printNeedResource()
+{
+    for(i=0;i<no_of_process;i++)
+    {
+        printf("Process %d :\t",(i+1));
+        for(j=0;j<no_of_resources;j++)
+            printf("%d\t",needResource[i][j]);
+        printf("\n");
+    }
+}
+int less(int a[])
+{
+    int i;
+    for(i=0;i<no_of_resources;i++)
+        if(a[i]>totalResource[i])
+            return 1;
+    return 0;
+}
+
