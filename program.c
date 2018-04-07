@@ -3,15 +3,16 @@
 #include<stdlib.h>
 
 int i,j;
+int amount = 4500;
 
 int no_of_process;                             
 int no_of_resources;
-int isActive[20]={0};                      
-int totalResource[20];
-int availResource[20];
-int allocResource[20][20];
-int maxResource[20][20];
-int needResource[20][20];
+int isActive[200]={0};                      
+int totalResource[200];
+int availResource[200];
+int allocResource[200][200];
+int maxResource[200][200];
+int needResource[200][200];
 
 pthread_mutex_t mutex;
 
@@ -30,24 +31,25 @@ void* Processes_fun(void *);
 int main()
 {
 
-    printf("Enter the no of process/thread : ");
+    printf("Initially Amount in the Account : %d\n",amount);
+    printf("Enter the number of Process/Thread in the System : ");
     scanf("%d",&no_of_process);
     
-    printf("Enter the no of Resources present in the System : ");
+    printf("Enter the Types of Resources present in the System : ");
     scanf("%d",&no_of_resources);
         
-    printf("\n----------Enter the no of instance of each resources present in the system-----------\n");
+    printf("\n----------Enter the number of instance of each resources present in the system-----------\n");
     for(i=0;i<no_of_resources;i++)
     {
         printf("Resource %d : ",i);
         scanf("%d",&totalResource[i]);
-        availResource[i]= totalResource[i];
+        availResource[i] = totalResource[i];
     }
 
     int check[no_of_resources];
     s3:
-        printf("\n----------Enter no of instance of Resources initially allocated to each Process-----------\n");
-        //int check[no_of_resources] ={0};
+        printf("\n----------Enter the number of instance of Resources initially allocated to each Process-----------\n");
+        
         for(i=0;i<no_of_resources;i++)
             check[i]=0;
             
@@ -57,9 +59,10 @@ int main()
             for(j=0;j<no_of_resources;j++)
                 {
                     scanf("%d",&allocResource[i][j]);
-                    check[j]+=allocResource[i][j];
+                    check[j] += allocResource[i][j];
                 }
         }
+
         if(isEnoughToAlloc(check)==0)
             {
                 printf("Sorry! Resource Allocated is bigger than available in system. Re-Enter\n");
@@ -72,7 +75,7 @@ int main()
         }
 
 
-    printf("\n---------Enter no of maximum instance allocated to a process-----------------\n");
+    printf("\n---------Enter number of Maximum instance that can be allocte to a Process-----------------\n");
     for(i=0;i<no_of_process;i++)
     {
         printf("For Process %d : ",i);
@@ -82,25 +85,26 @@ int main()
         }
     }
 
-
+    
     for(i=0;i<no_of_process;i++)
         for(j=0;j<no_of_resources;j++)
             needResource[i][j] = maxResource[i][j] - allocResource[i][j];
 
 
-    printf("Resource Currently Available :- \n");
+    printf("Resources Currently Available :- \n");
     printAvailResource();
 
-    printf("Initial Resource allocated :- \n");
+    printf("Initial Resources allocated :- \n");
     printAllocResource();
 
-    printf("Initial Need of Resource :- \n");
+    printf("Initial Resources Needed :- \n");
     printNeedResource();
 
 
     //multiThreading Starts
 
     pthread_mutex_init(&mutex,NULL);
+
     pthread_t *threadid = malloc(sizeof(pthread_t)*no_of_process);
     int *proid = malloc(sizeof(int)*no_of_process);
 
@@ -118,10 +122,11 @@ int main()
         pthread_join(*(threadid+i),NULL);
     }
 
+    printf("Final Amount in the Acount : %d\n",amount);
     return 0;
 }
 
-void * Processes_fun(void *x)
+void* Processes_fun(void *x)
 {
     int processID = *(int*)x;
     while(isActive[processID]==1)
@@ -131,18 +136,34 @@ void * Processes_fun(void *x)
         
         pthread_mutex_lock(&mutex); 
 
-        printf("Process %d trying to request some Resources \n",processID);
-        printf("Enter the instance  of each resources requested by Process %d",processID);
+        printf("Process %d is trying to Request some instance of each Resources : ",processID);
         for(i=0;i<no_of_resources;i++)
-            scanf("%d",&reqResource[i]);
-        int x=requestResource(processID,reqResource);
-        
-        pthread_mutex_unlock(&mutex);
+        {
+            if(needResource[processID][i] != 0)
+            {
+                reqResource[i] = rand() % ( needResource[processID][i] + 1 );
+            }
+            else
+            {
+                reqResource[i] = 0;
+            }
+        }
 
-        pthread_mutex_lock(&mutex);
+        for(i=0;i<no_of_resources;i++)
+            printf("%d ",reqResource[i]);
+        printf("\n");
+
+        requestResource(processID,reqResource);
+
+	    sleep(1);
         if(isNeedIsZero(processID)==1)
         {
-            printf("Process %d is releasing its all alocated resource and finnally terminated \n",processID);
+            int amt;
+            amt = amount;
+            amt = amt + 100;
+            amount = amt;
+            printf("Process %d is changing Amount of the Account\n",processID);
+            printf("\nProcess %d is releasing its all alocated resource and finnally terminated \n",processID);
             isActive[processID]=0;
             for(i=0;i<no_of_resources;i++)
             {
@@ -150,6 +171,7 @@ void * Processes_fun(void *x)
                 allocResource[processID][i]=0;
             }
         }
+
         pthread_mutex_unlock(&mutex);
     }
     
@@ -168,7 +190,7 @@ void printAllocResource()
 {
     for(i=0;i<no_of_process;i++)
     {
-        printf("Process %d :\t",(i+1));
+        printf("Process %d :\t",i);
         for(j=0;j<no_of_resources;j++)
             printf("%d\t",allocResource[i][j]);
         printf("\n");
@@ -179,7 +201,7 @@ void printNeedResource()
 {
     for(i=0;i<no_of_process;i++)
     {
-        printf("Process %d :\t",(i+1));
+        printf("Process %d :\t",i);
         for(j=0;j<no_of_resources;j++)
             printf("%d\t",needResource[i][j]);
         printf("\n");
@@ -208,25 +230,25 @@ int requestResource(int processID,int reqResource[])
 		allocResource[processID][i] += reqResource[i];
 		availResource[i] -= reqResource[i];
 	}
-	printf("Checking if it is safe to allocate...\n");
+	printf("Checking if it is safe to allocate the Resource...\n");
 
     if(isSafeState()==1)
     {
-        printf("System is in safe state. Successfully Allocated!...\n");
-        printf("Available Resource\n");
+        printf("System is in Safe State. Resources Successfully Allocated to the Process %d!...\n",processID);
+        printf("Resources Currently Available :- \n");
         printAvailResource();
-        printf("Allocated Resource\n");
+        printf("Resources Allocated\n");
         printAllocResource();
-        printf("Need Resource\n");
+        printf("Resources Needed\n");
         printNeedResource();
         return 1;
     }
     else
     {
-        printf("Allocating Resource does not leave the system in Safe State\n");
+        printf("Allocating Resource does not leave the System in Safe State\n");
         for (i = 0; i < no_of_resources; ++i)
 		{
-			needResource[processID][i] += reqResource[i];
+		    needResource[processID][i] += reqResource[i];
 		    allocResource[processID][i] -= reqResource[i];
 		    availResource[i] += reqResource[i];
 		}
@@ -270,7 +292,7 @@ int isNeedIsZero(int processID)
 {
     for(i=0;i<no_of_resources;i++)
     {
-        if(needResource[processID]==0)
+        if(needResource[processID][i]==0)
         {
             continue;
         }
@@ -292,7 +314,6 @@ int isSafeState()
             else    
                 isEnd[i]=1;
         }
-
     int avail[no_of_resources];
     for(i=0;i<no_of_resources;i++)
     {
@@ -309,7 +330,7 @@ int isSafeState()
                 {
                     if(j==no_of_resources-1)
                     {
-                        isEnd[j]=1;
+                        isEnd[i]=1;
                         for(k=0;k<no_of_resources;k++)
                         {
                             avail[k]+=allocResource[i][k];
@@ -336,7 +357,6 @@ int isSafeState()
             continue;
         }
     }
-
     for(i=0;i<no_of_process;i++)
     {
         if(isEnd[i]==1)
@@ -345,5 +365,4 @@ int isSafeState()
             return 0;
     }
     return 1;
-    
 }
